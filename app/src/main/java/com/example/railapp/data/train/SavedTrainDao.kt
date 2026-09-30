@@ -8,12 +8,12 @@ interface SavedTrainDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveTrain(savedTrain: SavedTrainEntity)
 
-    @Query("DELETE FROM saved_trains WHERE userId = :userId AND trainId = :trainId AND stationId = :stationId")
-    suspend fun deleteSavedTrain(userId: String, trainId: String, stationId: String)
+    @Query("DELETE FROM saved_trains WHERE userId = :userId AND trainId = :trainId")
+    suspend fun deleteSavedTrain(userId: String, trainId: String)
 
-    @Query("SELECT * FROM saved_trains WHERE userId = :userId")
+    @Query("SELECT * FROM saved_trains WHERE userId = :userId ORDER BY createdAt DESC")
     fun getSavedTrainsForUser(userId: String): Flow<List<SavedTrainEntity>>
 
-    @Query("SELECT EXISTS(SELECT 1 FROM saved_trains WHERE userId = :userId AND trainId = :trainId AND stationId = :stationId)")
-    fun isTrainSaved(userId: String, trainId: String, stationId: String): Flow<Boolean>
+    @Query("SELECT EXISTS(SELECT 1 FROM saved_trains WHERE userId = :userId AND trainId = :trainId)")
+    fun isTrainSaved(userId: String, trainId: String): Flow<Boolean>
 }

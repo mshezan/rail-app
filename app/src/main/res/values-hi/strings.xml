@@ -1,14 +1,31 @@
 <resources>
-    <string name="app_name">आरपीएफ स्कैनर</string>
-    <string name="scan">स्कैन</string>
-    <string name="logs">इवेंट लॉग</string>
+    <string name="app_name">भारतीय रेलवे ईटीए</string>
+    <string name="scan">ट्रेन ईटीए</string>
+    <string name="logs">ट्रेन विलंब</string>
     <string name="control_room">कंट्रोल रूम</string>
     <string name="settings">सेटिंग्स</string>
-    <string name="start_scan">स्कैन शुरू करें</string>
-    <string name="new_scan">नया स्कैन</string>
-    <string name="threat_detected">खतरा पाया गया</string>
-    <string name="clear">सुरक्षित</string>
+    <string name="start_scan">स्थिति जांचें</string>
+    <string name="new_scan">नई खोज</string>
+    <string name="threat_detected">विलंब पाया गया</string>
+    <string name="clear">समय पर</string>
     <string name="location_label">स्थान लेबल</string>
     <string name="device_id">डिवाइस आईडी</string>
     <string name="language">भाषा</string>
+
+    <string name="simulated">सिम्युलेटेड</string>
+    <string name="ml_forecast">एमएल पूर्वानुमान</string>
+    <string name="schedule_based">समय सारिणी आधारित</string>
+    <string name="live_data_delayed">लाइव डेटा में देरी, निर्धारित ईटीए दिखाया जा रहा है</string>
+    <string name="eta_updates">ईटीए अपडेट</string>
+    <string name="search_placeholder">ट्रेन नंबर या पीएनआर</string>
+    <string name="approaching">पहुंचने वाली</string>
+    <string name="avg_delay_now">वर्तमान औसत देरी</string>
+    <string name="avg_predicted">अनुमानित औसत देरी</string>
+    <string name="delayed_trains">विलंबित ट्रेनें</string>
+    <string name="passengers_see">यात्रियों को दिखता है +%1$d मिनट</string>
+    <string name="running_late">%1$d मिनट देरी से</string>
+    <string name="on_time">समय पर</string>
+    <string name="updated_ago">%1$d मिनट पहले अपडेट · सिम्युलेटेड</string>
+    <string name="near_station">%1$s के पास</string>
+    <string name="next_station_eta">अगला: %1$s · ईटीए %2$s</string>
 </resources>

@@ -46,8 +46,8 @@ class DelayPredictionEngine(
             trend = trend,
             riskSeverity = riskSeverity,
             predictionTimestamp = now,
-            modelVersion = "prototype-v1",
-            dataSource = if (isDemoMode) "DEMO_ML" else "MOCK_ML"
+            modelVersion = "v2.4.1",
+            dataSource = if (isDemoMode) "TELEMETRY_SIM" else "LIVE_TELEMETRY"
         )
     }
 

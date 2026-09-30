@@ -5,7 +5,10 @@ import com.example.railapp.BuildConfig
 import com.example.railapp.auth.SessionManager
 import com.example.railapp.data.AppDatabase
 import com.example.railapp.data.ScanRepository
+import com.example.railapp.data.train.MockPNRRepository
+import com.example.railapp.data.train.PNRRepository
 import com.example.railapp.data.train.TrainStatusRepository
+import com.example.railapp.data.train.TrainTrackingRepository
 import com.example.railapp.sensor.DetectionSensor
 import com.example.railapp.sensor.SimulatedSensor
 import io.github.jan.supabase.SupabaseClient
@@ -27,5 +30,7 @@ class AppContainer(private val context: Context) {
     val scanRepository: ScanRepository by lazy { ScanRepository(database.scanEventDao()) }
     val detectionSensor: DetectionSensor by lazy { SimulatedSensor() }
     val trainStatusRepository: TrainStatusRepository by lazy { TrainStatusRepository() }
+    val trainTrackingRepository: TrainTrackingRepository by lazy { TrainTrackingRepository(trainStatusRepository) }
+    val pnrRepository: PNRRepository by lazy { MockPNRRepository() }
     val sessionManager: SessionManager by lazy { SessionManager(supabaseClient) }
 }

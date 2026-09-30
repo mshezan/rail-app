@@ -42,28 +42,28 @@ class MockTrainDataSource(
 
         return when (stationId) {
             "stn_mas" -> listOf(
-                createOpInfo("trn_12675", "stn_mas", now + TimeUnit.MINUTES.toMillis(20), now + TimeUnit.MINUTES.toMillis(35), "Platform 4", 12, 22, isDemoMode),
-                createOpInfo("trn_12007", "stn_mas", now + TimeUnit.MINUTES.toMillis(45), now + TimeUnit.MINUTES.toMillis(60), "Platform 2", 18, 18, isDemoMode),
-                createOpInfo("trn_12621", "stn_mas", now + TimeUnit.MINUTES.toMillis(90), now + TimeUnit.MINUTES.toMillis(110), "Platform 7", 5, 5, isDemoMode),
-                createOpInfo("trn_12640", "stn_mas", now - TimeUnit.MINUTES.toMillis(10), now + TimeUnit.MINUTES.toMillis(5), "Platform 1", 25, 12, isDemoMode),
-                createOpInfo("trn_12028", "stn_mas", now + TimeUnit.MINUTES.toMillis(150), now + TimeUnit.MINUTES.toMillis(165), "Platform 3", 0, 0, isDemoMode)
+                createOpInfo("trn_12675", "stn_mas", now + TimeUnit.MINUTES.toMillis(20), now + TimeUnit.MINUTES.toMillis(35), "4", 12, 22, isDemoMode),
+                createOpInfo("trn_12007", "stn_mas", now + TimeUnit.MINUTES.toMillis(45), now + TimeUnit.MINUTES.toMillis(60), "2", 18, 18, isDemoMode),
+                createOpInfo("trn_12621", "stn_mas", now + TimeUnit.MINUTES.toMillis(90), now + TimeUnit.MINUTES.toMillis(110), "7", 5, 5, isDemoMode),
+                createOpInfo("trn_12640", "stn_mas", now - TimeUnit.MINUTES.toMillis(10), now + TimeUnit.MINUTES.toMillis(5), "1", 25, 12, isDemoMode),
+                createOpInfo("trn_12028", "stn_mas", now + TimeUnit.MINUTES.toMillis(150), now + TimeUnit.MINUTES.toMillis(165), "3", 0, 0, isDemoMode)
             )
             "stn_sbc" -> listOf(
-                createOpInfo("trn_12640", "stn_sbc", now - TimeUnit.MINUTES.toMillis(40), now - TimeUnit.MINUTES.toMillis(25), "Platform 5", 2, 2, isDemoMode),
-                createOpInfo("trn_12028", "stn_sbc", now + TimeUnit.MINUTES.toMillis(10), now + TimeUnit.MINUTES.toMillis(25), "Platform 1", 8, 16, isDemoMode),
-                createOpInfo("trn_12628", "stn_sbc", now + TimeUnit.MINUTES.toMillis(75), now + TimeUnit.MINUTES.toMillis(90), "Platform 3", 20, 28, isDemoMode)
+                createOpInfo("trn_12640", "stn_sbc", now - TimeUnit.MINUTES.toMillis(40), now - TimeUnit.MINUTES.toMillis(25), "5", 2, 2, isDemoMode),
+                createOpInfo("trn_12028", "stn_sbc", now + TimeUnit.MINUTES.toMillis(10), now + TimeUnit.MINUTES.toMillis(25), "1", 8, 16, isDemoMode),
+                createOpInfo("trn_12628", "stn_sbc", now + TimeUnit.MINUTES.toMillis(75), now + TimeUnit.MINUTES.toMillis(90), "3", 20, 28, isDemoMode)
             )
             "stn_ndls" -> listOf(
-                createOpInfo("trn_12621", "stn_ndls", now + TimeUnit.MINUTES.toMillis(200), now + TimeUnit.MINUTES.toMillis(220), "Platform 16", 10, 10, isDemoMode),
-                createOpInfo("trn_12628", "stn_ndls", now + TimeUnit.MINUTES.toMillis(180), now + TimeUnit.MINUTES.toMillis(200), "Platform 8", 22, 35, isDemoMode),
-                createOpInfo("trn_12951", "stn_ndls", now + TimeUnit.MINUTES.toMillis(30), now + TimeUnit.MINUTES.toMillis(45), "Platform 1", 0, 0, isDemoMode),
-                createOpInfo("trn_12301", "stn_ndls", now + TimeUnit.MINUTES.toMillis(120), now + TimeUnit.MINUTES.toMillis(135), "Platform 9", 0, 0, isDemoMode)
+                createOpInfo("trn_12621", "stn_ndls", now + TimeUnit.MINUTES.toMillis(200), now + TimeUnit.MINUTES.toMillis(220), "16", 10, 10, isDemoMode),
+                createOpInfo("trn_12628", "stn_ndls", now + TimeUnit.MINUTES.toMillis(180), now + TimeUnit.MINUTES.toMillis(200), "8", 22, 35, isDemoMode),
+                createOpInfo("trn_12951", "stn_ndls", now + TimeUnit.MINUTES.toMillis(30), now + TimeUnit.MINUTES.toMillis(45), "1", 0, 0, isDemoMode),
+                createOpInfo("trn_12301", "stn_ndls", now + TimeUnit.MINUTES.toMillis(120), now + TimeUnit.MINUTES.toMillis(135), "9", 0, 0, isDemoMode)
             )
             "stn_mmct" -> listOf(
-                createOpInfo("trn_12951", "stn_mmct", now - TimeUnit.MINUTES.toMillis(15), now + TimeUnit.MINUTES.toMillis(5), "Platform 2", 0, 0, isDemoMode)
+                createOpInfo("trn_12951", "stn_mmct", now - TimeUnit.MINUTES.toMillis(15), now + TimeUnit.MINUTES.toMillis(5), "2", 0, 0, isDemoMode)
             )
             "stn_hwh" -> listOf(
-                createOpInfo("trn_12301", "stn_hwh", now - TimeUnit.MINUTES.toMillis(30), now - TimeUnit.MINUTES.toMillis(10), "Platform 10", 5, 8, isDemoMode)
+                createOpInfo("trn_12301", "stn_hwh", now - TimeUnit.MINUTES.toMillis(30), now - TimeUnit.MINUTES.toMillis(10), "10", 5, 8, isDemoMode)
             )
             else -> emptyList()
         }

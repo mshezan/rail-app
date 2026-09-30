@@ -20,7 +20,7 @@ class SessionManager(
             // For production/demo, attempt Supabase or fallback to admin credentials check
             val user = User(
                 id = "admin_user_01",
-                email = if (email.isBlank()) "admin@rpf.railways.gov.in" else email,
+                email = if (email.isBlank()) "admin@railways.gov.in" else email,
                 role = UserRole.ADMIN
             )
             _currentUser.value = user

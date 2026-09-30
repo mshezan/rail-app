@@ -9,12 +9,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.railapp.auth.SessionManager
 import kotlinx.coroutines.launch
 
@@ -37,7 +35,7 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // App / Authority Branding Header
+        // App Header
         Icon(
             imageVector = Icons.Default.DirectionsRailway,
             contentDescription = null,
@@ -48,16 +46,14 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "INDIAN RAILWAYS PORTAL",
+            text = "Indian Railways ETA",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = 1.sp
+            fontWeight = FontWeight.Bold
         )
 
         Text(
-            text = "Security Terminal & Passenger Operations",
-            style = MaterialTheme.typography.bodySmall,
+            text = "Train running status & arrival forecasts",
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
@@ -69,7 +65,7 @@ fun LoginScreen(
                 selected = selectedTab == 0,
                 onClick = {
                     selectedTab = 0
-                    email = "admin@rpf.railways.gov.in"
+                    email = "admin@railways.gov.in"
                     password = "••••••••"
                 },
                 text = { Text("Admin") }
@@ -96,8 +92,8 @@ fun LoginScreen(
             0 -> {
                 // Admin Login Form
                 Text(
-                    text = "RPF Security Terminal Login",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "Station Control Login",
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
@@ -107,7 +103,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Officer Email / ID") },
+                    label = { Text("Station officer email / ID") },
                     leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -119,7 +115,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Security Credentials / Password") },
+                    label = { Text("Password") },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -147,7 +143,7 @@ fun LoginScreen(
                     if (isLoading) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                     } else {
-                        Text("LOGIN AS RPF ADMIN", fontWeight = FontWeight.Bold)
+                        Text("Login as Station Admin", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -155,8 +151,8 @@ fun LoginScreen(
             1 -> {
                 // Passenger Login Form
                 Text(
-                    text = "Passenger Service Portal Login",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "Passenger Portal Login",
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
@@ -166,7 +162,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Passenger Email / IRCTC ID") },
+                    label = { Text("Passenger email / IRCTC ID") },
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -206,7 +202,7 @@ fun LoginScreen(
                     if (isLoading) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                     } else {
-                        Text("LOGIN AS PASSENGER", fontWeight = FontWeight.Bold)
+                        Text("Login as Passenger", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -222,7 +218,7 @@ fun LoginScreen(
                         Text("Guest Access", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            "View live station schedules and train delay predictions without signing in.",
+                            "View station schedules and train delay predictions without signing in.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -241,7 +237,7 @@ fun LoginScreen(
                         .height(52.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("CONTINUE AS GUEST", fontWeight = FontWeight.Bold)
+                    Text("Continue as Guest", fontWeight = FontWeight.Bold)
                 }
             }
         }

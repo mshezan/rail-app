@@ -55,10 +55,9 @@ fun PassengerDelaysScreen(viewModel: PassengerDelaysViewModel) {
         ) {
             Column {
                 Text(
-                    text = "PASSENGER UPDATES",
+                    text = "Passenger Updates",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "Published Delay Communications Audit Trail",
@@ -108,16 +107,19 @@ fun PassengerDelaysScreen(viewModel: PassengerDelaysViewModel) {
 
     // Edit Published Delay Dialog
     selectedActionForEdit?.let { action ->
+        val mockInfo = StationTrainOperationalInfo(
+            train = Train(action.trainId, action.trainNumber, action.trainName, action.origin, action.destination),
+            schedule = TrainStationSchedule(action.trainId, action.stationId, System.currentTimeMillis(), System.currentTimeMillis(), "P1"),
+            status = TrainStatus(action.trainId, action.stationId, System.currentTimeMillis(), System.currentTimeMillis(), action.newDelayMinutes, action.newDelayMinutes, TrainStatusType.DELAYED, 85, System.currentTimeMillis(), DataSourceType.MOCK),
+            prediction = DelayPrediction(action.trainId, action.stationId, action.previousDelayMinutes, action.newDelayMinutes, System.currentTimeMillis(), System.currentTimeMillis(), 85, PredictionTrend.STABLE, DelayRiskSeverity.LOW),
+            activePassengerDelayMinutes = action.newDelayMinutes
+        )
+        val trainHistory = passengerActions.filter { it.trainId == action.trainId }
+
         EditDelayDialog(
-            action = action,
+            info = mockInfo,
+            history = trainHistory,
             onConfirm = { newDelay, reason ->
-                // Publish update
-                val mockInfo = StationTrainOperationalInfo(
-                    train = Train(action.trainId, action.trainNumber, action.trainName, action.origin, action.destination),
-                    schedule = TrainStationSchedule(action.trainId, action.stationId, System.currentTimeMillis(), System.currentTimeMillis(), "P1"),
-                    status = TrainStatus(action.trainId, action.stationId, System.currentTimeMillis(), System.currentTimeMillis(), action.newDelayMinutes, action.newDelayMinutes, TrainStatusType.DELAYED, 85, System.currentTimeMillis(), DataSourceType.MOCK),
-                    prediction = DelayPrediction(action.trainId, action.stationId, action.previousDelayMinutes, action.newDelayMinutes, System.currentTimeMillis(), System.currentTimeMillis(), 85, PredictionTrend.STABLE, DelayRiskSeverity.LOW)
-                )
                 viewModel.updatePassengerDelay(mockInfo, newDelay, reason)
                 selectedActionForEdit = null
             },
@@ -303,56 +305,4 @@ fun PassengerActionCard(
             }
         }
     }
-}
-
-@Composable
-fun EditDelayDialog(
-    action: PassengerDelayAction,
-    onConfirm: (newDelay: Int, reason: String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var newDelayInput by remember { mutableStateOf(action.newDelayMinutes.toString()) }
-    var reasonInput by remember { mutableStateOf("Updated by Station Operator") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Update Passenger Delay") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Train: ${action.trainNumber} (${action.trainName})", fontWeight = FontWeight.Bold)
-
-                OutlinedTextField(
-                    value = newDelayInput,
-                    onValueChange = { newDelayInput = it },
-                    label = { Text("Passenger Delay (Minutes)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = reasonInput,
-                    onValueChange = { reasonInput = it },
-                    label = { Text("Update Reason / Note") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val delay = newDelayInput.toIntOrNull() ?: action.newDelayMinutes
-                    onConfirm(delay, reasonInput)
-                }
-            ) {
-                Text("PUBLISH UPDATE")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("CANCEL")
-            }
-        }
-    )
 }

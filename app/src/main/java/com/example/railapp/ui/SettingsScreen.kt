@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -13,16 +14,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.railapp.auth.UserRole
 import com.example.railapp.di.AppContainer
 import com.example.railapp.ui.components.SectionHeader
+import com.example.railapp.ui.theme.StatusHighThreat
 
 @Composable
 fun SettingsScreen(appContainer: AppContainer? = null) {
+    val sessionManager = appContainer?.sessionManager
+    val currentUser by sessionManager?.currentUser?.collectAsState() ?: remember { mutableStateOf(null) }
+    val currentRole by sessionManager?.currentRole?.collectAsState() ?: remember { mutableStateOf(null) }
+
     var selectedLanguage by remember { mutableStateOf("English") }
     var soundEnabled by remember { mutableStateOf(true) }
-    var vibrationEnabled by remember { mutableStateOf(true) }
-    var deviceId by remember { mutableStateOf("RPF_DEVICE_01") }
-    var demoMode by remember { mutableStateOf(false) }
+    var demoTrainData by remember { mutableStateOf(true) }
 
     Column(
         modifier = Modifier
@@ -32,16 +37,48 @@ fun SettingsScreen(appContainer: AppContainer? = null) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "System Settings",
+            text = "Settings",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
 
-        // Section 1: General
+        // Section 1: Account Info
         SectionCard {
             Column(modifier = Modifier.padding(16.dp)) {
-                SectionHeader("GENERAL")
+                SectionHeader("ACCOUNT INFORMATION")
                 Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.AccountCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = currentUser?.email ?: "Guest User",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Role: ${currentRole?.name ?: "GUEST"}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Section 2: Preferences
+        SectionCard {
+            Column(modifier = Modifier.padding(16.dp)) {
+                SectionHeader("PREFERENCES")
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text("Interface Language", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -58,18 +95,11 @@ fun SettingsScreen(appContainer: AppContainer? = null) {
                     )
                     Text("Hindi (हिंदी)", modifier = Modifier.padding(start = 4.dp))
                 }
-            }
-        }
 
-        // Section 2: Alerts
-        SectionCard {
-            Column(modifier = Modifier.padding(16.dp)) {
-                SectionHeader("THREAT ALERTS")
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -77,56 +107,19 @@ fun SettingsScreen(appContainer: AppContainer? = null) {
                         Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("Audio Sound Alert", style = MaterialTheme.typography.titleMedium)
-                            Text("Play alert tone upon threat detection", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Audio Alerts", style = MaterialTheme.typography.titleMedium)
+                            Text("Play sound tone for delay updates", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     Switch(checked = soundEnabled, onCheckedChange = { soundEnabled = it })
                 }
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Vibration, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text("Vibration Alert", style = MaterialTheme.typography.titleMedium)
-                            Text("Haptic feedback on threat detection", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                    Switch(checked = vibrationEnabled, onCheckedChange = { vibrationEnabled = it })
-                }
             }
         }
 
-        // Section 3: Device Configuration
+        // Section 3: Network Simulation
         SectionCard {
             Column(modifier = Modifier.padding(16.dp)) {
-                SectionHeader("DEVICE IDENTIFICATION")
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = deviceId,
-                    onValueChange = { deviceId = it },
-                    label = { Text("Assigned Device ID") },
-                    leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
-            }
-        }
-
-        // Section 4: Demo / Development Mode
-        SectionCard {
-            Column(modifier = Modifier.padding(16.dp)) {
-                SectionHeader("DEMO & FIELD TESTING")
+                SectionHeader("SYSTEM & NETWORK SIMULATION")
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -137,24 +130,62 @@ fun SettingsScreen(appContainer: AppContainer? = null) {
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Icon(Icons.Default.BugReport, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                        Icon(Icons.Default.Tune, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("Force Threat on Next Scan", style = MaterialTheme.typography.titleMedium)
+                            Text("Simulate Live Delay Updates", style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "Simulate a threat result to verify alert workflow",
+                                "Simulate realtime delay changes for network verification",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                     Switch(
-                        checked = demoMode,
-                        onCheckedChange = {
-                            demoMode = it
-                            appContainer?.detectionSensor?.forceThreat = it
-                        }
+                        checked = demoTrainData,
+                        onCheckedChange = { demoTrainData = it }
                     )
+                }
+            }
+        }
+
+        // Section 4: Account / Session Actions (Logout / Exit Guest Mode)
+        SectionCard {
+            Column(modifier = Modifier.padding(16.dp)) {
+                SectionHeader(if (currentRole == UserRole.GUEST) "GUEST SESSION" else "ACCOUNT ACTIONS")
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (currentRole == UserRole.GUEST) {
+                    Text(
+                        text = "Sign in to save favorite trains, customize preferred stations, and receive personal delay updates.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = { sessionManager?.logout() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("EXIT GUEST MODE / SIGN IN", fontWeight = FontWeight.Bold)
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = { sessionManager?.logout() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusHighThreat)
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("LOG OUT", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

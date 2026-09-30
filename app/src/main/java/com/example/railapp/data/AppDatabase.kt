@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.example.railapp.data.train.SavedTrainDao
 import com.example.railapp.data.train.SavedTrainEntity
 
-@Database(entities = [ScanEvent::class, SavedTrainEntity::class], version = 3, exportSchema = false)
+@Database(entities = [ScanEvent::class, SavedTrainEntity::class], version = 4, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun scanEventDao(): ScanEventDao
     abstract fun savedTrainDao(): SavedTrainDao

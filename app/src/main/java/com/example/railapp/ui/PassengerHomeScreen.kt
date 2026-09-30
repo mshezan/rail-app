@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -14,13 +16,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.railapp.auth.UserRole
 import com.example.railapp.domain.train.StationTrainOperationalInfo
-import com.example.railapp.domain.train.TrainStatusType
 import com.example.railapp.ui.components.EmptyStateView
 import com.example.railapp.ui.theme.*
 import java.text.SimpleDateFormat
@@ -28,20 +32,29 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PassengerHomeScreen(viewModel: PassengerHomeViewModel) {
-    val currentUser by viewModel.currentUser.collectAsState()
+fun PassengerHomeScreen(
+    viewModel: PassengerHomeViewModel,
+    onSelectTrainForTracking: (trainId: String, stationId: String) -> Unit
+) {
     val currentRole by viewModel.currentRole.collectAsState()
     val stations by viewModel.stations.collectAsState()
     val selectedStation by viewModel.selectedStation.collectAsState()
     val relevantTrains by viewModel.relevantTrains.collectAsState()
-    val savedTrainsWithStatus by viewModel.savedTrainsWithStatus.collectAsState()
     val savedTrainKeys by viewModel.savedTrainKeys.collectAsState()
     val isOffline by viewModel.isOffline.collectAsState()
     val lastUpdatedTime by viewModel.lastUpdatedTime.collectAsState()
     val showGuestPrompt by viewModel.showGuestPrompt.collectAsState()
 
+    val searchMode by viewModel.searchMode.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val pnrResult by viewModel.pnrResult.collectAsState()
+    val trainNumberResult by viewModel.trainNumberResult.collectAsState()
+    val pnrError by viewModel.pnrError.collectAsState()
+    val trainError by viewModel.trainError.collectAsState()
+    val isSearching by viewModel.isSearching.collectAsState()
+    val recentSearches by viewModel.recentSearches.collectAsState()
+
     var stationPickerExpanded by remember { mutableStateOf(false) }
-    var selectedTrainForDetail by remember { mutableStateOf<StationTrainOperationalInfo?>(null) }
 
     val isPassenger = currentRole == UserRole.PASSENGER
 
@@ -50,45 +63,38 @@ fun PassengerHomeScreen(viewModel: PassengerHomeViewModel) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Personalized Header / Guest Banner
+        // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = if (isPassenger) "GOOD DAY, ${currentUser?.email?.substringBefore('@')?.uppercase() ?: "PASSENGER"}" else "GUEST MODE",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace
-                )
-                Text(
-                    text = if (isPassenger) "Personalized Railway Services" else "Temporary Live Station Schedule Viewer",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Text(
+                text = if (isPassenger) "Your Journey" else "Trains",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.ExtraBold
+            )
 
             Surface(
-                color = if (isOffline) StatusMediumThreatContainer else StatusSafeContainer,
-                shape = RoundedCornerShape(8.dp)
+                color = if (isOffline) StatusMediumThreatContainer else MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Icon(
-                        imageVector = if (isOffline) Icons.Default.CloudOff else Icons.Default.CheckCircle,
+                        imageVector = if (isOffline) Icons.Default.CloudOff else Icons.Default.CellTower,
                         contentDescription = null,
-                        tint = if (isOffline) StatusMediumThreat else StatusSafe,
+                        tint = if (isOffline) StatusMediumThreat else MaterialTheme.colorScheme.outline,
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (isOffline) "OFFLINE" else "LIVE",
+                        text = if (isOffline) "OFFLINE" else "SIMULATED",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isOffline) StatusMediumThreat else StatusSafe,
+                        color = if (isOffline) StatusMediumThreat else MaterialTheme.colorScheme.outline,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -97,33 +103,229 @@ fun PassengerHomeScreen(viewModel: PassengerHomeViewModel) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Saved Trains Carousel (For Authenticated Passengers)
-        if (isPassenger && savedTrainsWithStatus.isNotEmpty()) {
-            Text(
-                text = "YOUR SAVED TRAINS",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(6.dp))
+        // MY JOURNEY / SEARCH AREA
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Text(
+                    text = "MY JOURNEY",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
 
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(savedTrainsWithStatus) { info ->
-                    SavedTrainCard(
-                        info = info,
-                        onClick = { selectedTrainForDetail = info },
-                        onUnsave = { viewModel.toggleSaveTrain(info) }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Segmented control (PNR / Train Number) - Only show PNR tab for authenticated Passengers
+                if (isPassenger) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChip(
+                            selected = searchMode == SearchMode.PNR,
+                            onClick = { viewModel.setSearchMode(SearchMode.PNR) },
+                            label = { Text("PNR Lookup") },
+                            leadingIcon = { Icon(Icons.Default.ConfirmationNumber, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                            modifier = Modifier.weight(1f)
+                        )
+                        FilterChip(
+                            selected = searchMode == SearchMode.TRAIN_NUMBER,
+                            onClick = { viewModel.setSearchMode(SearchMode.TRAIN_NUMBER) },
+                            label = { Text("Train Number") },
+                            leadingIcon = { Icon(Icons.Default.Train, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                // Input Field
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { viewModel.updateSearchQuery(it) },
+                        placeholder = {
+                            Text(
+                                if (isPassenger && searchMode == SearchMode.PNR) "Enter 10-digit PNR"
+                                else "Enter Train number or name"
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                if (isPassenger && searchMode == SearchMode.PNR) Icons.Default.ConfirmationNumber else Icons.Default.Search,
+                                contentDescription = null
+                            )
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.updateSearchQuery("") }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Clear")
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = if (isPassenger && searchMode == SearchMode.PNR) KeyboardType.Number else KeyboardType.Text,
+                            imeAction = ImeAction.Search
+                        ),
+                        keyboardActions = KeyboardActions(onSearch = { viewModel.performSearch() }),
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp)
                     )
+
+                    Button(
+                        onClick = { viewModel.performSearch() },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.height(52.dp)
+                    ) {
+                        Text("SEARCH")
+                    }
+                }
+
+                // Inline Error Messages
+                pnrError?.let { err ->
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                }
+
+                trainError?.let { err ->
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                }
+
+                if (isSearching) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        Text("Searching...", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                // PNR Search Result Card
+                pnrResult?.let { pnr ->
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "PNR ${pnr.pnr}",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Surface(
+                            color = StatusSafeContainer,
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = pnr.statusLabel,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = StatusSafe,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("${pnr.trainNumber} ${pnr.trainName}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("${pnr.sourceStation} (${pnr.sourceStationCode}) ➔ ${pnr.destinationStation} (${pnr.destinationStationCode})", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Journey: ${pnr.journeyDate}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Status: Running +${pnr.currentDelayMinutes} min", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = StatusHighThreat)
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Button(
+                        onClick = { onSelectTrainForTracking(pnr.trainId, "stn_mas") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("WHERE IS MY TRAIN?")
+                    }
+                }
+
+                // Train Number Search Result Card
+                trainNumberResult?.let { info ->
+                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text("${info.train.trainNumber} ${info.train.trainName}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("${info.train.origin} ➔ ${info.train.destination}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("ETA: ${timeFormat.format(Date(info.status.predictedArrival))}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                        Text("Current: +${info.prediction.currentDelayMinutes} min", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = StatusHighThreat)
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Button(
+                        onClick = { onSelectTrainForTracking(info.train.id, info.schedule.stationId) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("TRACK TRAIN")
+                    }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Station Selector Dropdown
+        // RECENT SEARCHES SECTION
+        if (recentSearches.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = "Recent:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(recentSearches) { item ->
+                        SuggestionChip(
+                            onClick = { onSelectTrainForTracking(item.trainId, item.stationId) },
+                            label = { Text("${item.trainNumber} ${item.trainName}", style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Compact Station Selector
         ExposedDropdownMenuBox(
             expanded = stationPickerExpanded,
             onExpandedChange = { stationPickerExpanded = !stationPickerExpanded },
@@ -133,7 +335,7 @@ fun PassengerHomeScreen(viewModel: PassengerHomeViewModel) {
                 value = selectedStation?.let { "${it.name} (${it.code})" } ?: "Select Station",
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("SELECT STATION") },
+                label = { Text("YOUR STATION") },
                 leadingIcon = { Icon(Icons.Default.Train, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = stationPickerExpanded) },
                 modifier = Modifier
@@ -170,11 +372,11 @@ fun PassengerHomeScreen(viewModel: PassengerHomeViewModel) {
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         Text(
-            text = "UPCOMING TRAINS AT ${selectedStation?.code ?: "STATION"}",
-            style = MaterialTheme.typography.labelSmall,
+            text = "Upcoming Trains",
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold
         )
@@ -191,25 +393,24 @@ fun PassengerHomeScreen(viewModel: PassengerHomeViewModel) {
             )
         } else {
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.weight(1f)
             ) {
                 items(relevantTrains) { info ->
-                    val key = "${info.train.id}_${info.schedule.stationId}"
-                    val isSaved = savedTrainKeys.contains(key)
+                    val isSaved = savedTrainKeys.contains(info.train.id)
 
                     PassengerTrainCard(
                         info = info,
                         isSaved = isSaved,
                         onToggleSave = { viewModel.toggleSaveTrain(info) },
-                        onClick = { selectedTrainForDetail = info }
+                        onClick = { onSelectTrainForTracking(info.train.id, info.schedule.stationId) }
                     )
                 }
             }
         }
     }
 
-    // Guest Registration Prompt Dialog
+    // Guest Prompt Modal
     if (showGuestPrompt) {
         AlertDialog(
             onDismissRequest = { viewModel.dismissGuestPrompt() },
@@ -217,118 +418,16 @@ fun PassengerHomeScreen(viewModel: PassengerHomeViewModel) {
             title = { Text("Sign In Required", fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    "Create an account or sign in as a passenger to save your favorite trains and receive personalized delay alerts!",
+                    "Sign in as a passenger to save your favorite trains and receive personalized updates.",
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
             confirmButton = {
                 Button(onClick = { viewModel.dismissGuestPrompt() }) {
-                    Text("OK, GOT IT")
+                    Text("OK")
                 }
             }
         )
-    }
-
-    selectedTrainForDetail?.let { info ->
-        val key = "${info.train.id}_${info.schedule.stationId}"
-        val isSaved = savedTrainKeys.contains(key)
-
-        PassengerTrainDetailDialog(
-            info = info,
-            isSaved = isSaved,
-            onToggleSave = { viewModel.toggleSaveTrain(info) },
-            onDismiss = { selectedTrainForDetail = null }
-        )
-    }
-}
-
-@Composable
-fun SavedTrainCard(
-    info: StationTrainOperationalInfo,
-    onClick: () -> Unit,
-    onUnsave: () -> Unit
-) {
-    val train = info.train
-    val status = info.status
-    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-
-    val statusColor = when (status.status) {
-        TrainStatusType.ON_TIME -> StatusSafe
-        TrainStatusType.DELAYED -> StatusHighThreat
-        TrainStatusType.ARRIVING -> StatusInfoCloud
-        TrainStatusType.BOARDING -> StatusMediumThreat
-        TrainStatusType.DEPARTED -> MaterialTheme.colorScheme.onSurfaceVariant
-        TrainStatusType.CANCELLED -> Color.Gray
-    }
-
-    Surface(
-        modifier = Modifier
-            .width(220.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        color = statusColor.copy(alpha = 0.12f),
-        border = BorderStroke(1.dp, statusColor.copy(alpha = 0.4f))
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = train.trainNumber,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                IconButton(onClick = onUnsave, modifier = Modifier.size(24.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.Favorite,
-                        contentDescription = "Unsave",
-                        tint = StatusHighThreat,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            Text(
-                text = train.trainName,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1
-            )
-
-            Text(
-                text = "${train.origin} ➔ ${train.destination}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Expected ${timeFormat.format(Date(status.predictedArrival))}",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = if (status.arrivalDelayMinutes > 0) "+${status.arrivalDelayMinutes}m Delay" else "On Time",
-                    color = statusColor,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
     }
 }
 
@@ -342,15 +441,13 @@ fun PassengerTrainCard(
     val train = info.train
     val schedule = info.schedule
     val status = info.status
+    val delayMinutes = info.activePassengerDelayMinutes ?: status.arrivalDelayMinutes
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
-    val statusColor = when (status.status) {
-        TrainStatusType.ON_TIME -> StatusSafe
-        TrainStatusType.DELAYED -> StatusHighThreat
-        TrainStatusType.ARRIVING -> StatusInfoCloud
-        TrainStatusType.BOARDING -> StatusMediumThreat
-        TrainStatusType.DEPARTED -> MaterialTheme.colorScheme.onSurfaceVariant
-        TrainStatusType.CANCELLED -> Color.Gray
+    val delayColor = when {
+        delayMinutes > 15 -> StatusHighThreat
+        delayMinutes > 5 -> StatusMediumThreat
+        else -> StatusSafe
     }
 
     Card(
@@ -362,23 +459,38 @@ fun PassengerTrainCard(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            // Row 1: Train Number, Name, Heart Favorite Toggle & Delay Badge
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // LEFT: Large ETA time in delay colour with small scheduled time struck through if delayed
+            Column(horizontalAlignment = Alignment.Start) {
+                Text(
+                    text = timeFormat.format(Date(status.predictedArrival)),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = if (delayMinutes > 0) delayColor else MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = timeFormat.format(Date(schedule.scheduledArrival)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textDecoration = if (delayMinutes > 0) TextDecoration.LineThrough else TextDecoration.None
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // MIDDLE: Train number, name, route
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.Start
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onToggleSave, modifier = Modifier.size(28.dp)) {
-                        Icon(
-                            imageVector = if (isSaved) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
-                            contentDescription = "Save Train",
-                            tint = if (isSaved) StatusHighThreat else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = train.trainNumber,
                         style = MaterialTheme.typography.titleMedium,
@@ -386,159 +498,62 @@ fun PassengerTrainCard(
                         fontFamily = FontFamily.Monospace,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = train.trainName,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1
                     )
                 }
 
-                Surface(
-                    color = statusColor.copy(alpha = 0.15f),
-                    shape = RoundedCornerShape(6.dp)
-                ) {
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = "${train.origin.substringBefore(" (")} ➔ ${train.destination.substringBefore(" (")}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // RIGHT: Delay chip, platform & Heart toggle
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(horizontalAlignment = Alignment.End) {
+                    Surface(
+                        color = delayColor.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = if (delayMinutes > 0) "+$delayMinutes min" else "On time",
+                            color = delayColor,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
                     Text(
-                        text = if (status.arrivalDelayMinutes > 0) "+${status.arrivalDelayMinutes} MIN DELAY" else status.status.name,
-                        color = statusColor,
+                        text = "Platform ${schedule.platform}",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // Row 2: Route Origin -> Destination
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Place,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "${train.origin} ➔ ${train.destination}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Row 3: Timings Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text("Scheduled Arrival", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(
-                        text = timeFormat.format(Date(schedule.scheduledArrival)),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
-                Column {
-                    Text("Expected Arrival", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(
-                        text = timeFormat.format(Date(status.predictedArrival)),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (status.arrivalDelayMinutes > 0) StatusHighThreat else StatusSafe
-                    )
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("Platform", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(
-                        text = schedule.platform,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun PassengerTrainDetailDialog(
-    info: StationTrainOperationalInfo,
-    isSaved: Boolean,
-    onToggleSave: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    val train = info.train
-    val schedule = info.schedule
-    val status = info.status
-    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("${train.trainNumber} - ${train.trainName}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("${train.origin} ➔ ${train.destination}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                IconButton(onClick = onToggleSave) {
+                IconButton(onClick = onToggleSave, modifier = Modifier.size(28.dp)) {
                     Icon(
                         imageVector = if (isSaved) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
                         contentDescription = "Save Train",
-                        tint = if (isSaved) StatusHighThreat else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (isSaved) StatusHighThreat else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                PassengerDetailRow(label = "Platform", value = schedule.platform)
-                PassengerDetailRow(
-                    label = "Scheduled Arrival",
-                    value = timeFormat.format(Date(schedule.scheduledArrival))
-                )
-                PassengerDetailRow(
-                    label = "Expected Arrival",
-                    value = timeFormat.format(Date(status.predictedArrival))
-                )
-                PassengerDetailRow(
-                    label = "Arrival Delay",
-                    value = if (status.arrivalDelayMinutes > 0) "+${status.arrivalDelayMinutes} minutes" else "On Time"
-                )
-                PassengerDetailRow(
-                    label = "Scheduled Departure",
-                    value = timeFormat.format(Date(schedule.scheduledDeparture))
-                )
-                PassengerDetailRow(
-                    label = "Expected Departure",
-                    value = timeFormat.format(Date(status.predictedDeparture))
-                )
-                PassengerDetailRow(label = "Current Status", value = status.status.name)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("CLOSE")
-            }
         }
-    )
-}
-
-@Composable
-fun PassengerDetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
     }
 }
